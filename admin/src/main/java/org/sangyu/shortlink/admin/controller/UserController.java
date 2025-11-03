@@ -9,6 +9,7 @@ import org.sangyu.shortlink.admin.dto.resp.UserRespDTO;
 import org.sangyu.shortlink.admin.service.UserService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -29,9 +30,22 @@ public class UserController {
     public Result<UserRespDTO> getUserByUsername(@PathVariable("username") String username) {
         return Results.success(userService.getUserByUsername(username));
     }
-
+    /**
+     * 根据手机号返回用户信息(无脱敏)
+     * @param username
+     * @return
+     */
     @GetMapping("/api/shortlink/v1/actual/user/{username}")
     public Result<UserActualRespDTO> getUserActualByUsername(@PathVariable("username") String username) {
         return Results.success(BeanUtil.toBean(userService.getUserByUsername(username), UserActualRespDTO.class));
+    }
+    /**
+     * 判断用户名是否存在
+     * @param username
+     * @return
+     */
+    @GetMapping("/api/shortlink/v1/user/has-username")
+    public Result<Boolean> hasUsername(@RequestParam("username") String username){
+        return Results.success(userService.hasUsername(username));
     }
 }
