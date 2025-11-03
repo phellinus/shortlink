@@ -2,6 +2,7 @@ package org.sangyu.shortlink.admin.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.sangyu.shortlink.admin.common.convention.result.Result;
+import org.sangyu.shortlink.admin.common.convention.result.Results;
 import org.sangyu.shortlink.admin.common.enums.UserErrorCodeEnum;
 import org.sangyu.shortlink.admin.dto.resp.UserRespDTO;
 import org.sangyu.shortlink.admin.service.UserService;
@@ -24,7 +25,7 @@ public class UserController {
         if (result == null) {
             return new Result<UserRespDTO>().setCode(UserErrorCodeEnum.USER_NULL.code()).setMessage(UserErrorCodeEnum.USER_NULL.message());
         }else{
-            return new Result<UserRespDTO>().setCode("0").setData(result);
+            return Results.success(result);
         }
     }
 }

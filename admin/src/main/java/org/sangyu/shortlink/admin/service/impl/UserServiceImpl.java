@@ -3,6 +3,8 @@ package org.sangyu.shortlink.admin.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.sangyu.shortlink.admin.common.convention.exception.ClientException;
+import org.sangyu.shortlink.admin.common.enums.UserErrorCodeEnum;
 import org.sangyu.shortlink.admin.dao.entity.UserDO;
 import org.sangyu.shortlink.admin.dao.mapper.UserMapper;
 import org.sangyu.shortlink.admin.dto.resp.UserRespDTO;
@@ -21,7 +23,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
                 .eq(UserDO::getUsername, username);
         UserDO userDO = baseMapper.selectOne(queryWrapper);
         if (userDO == null) {
-            return null;
+            throw new ClientException(UserErrorCodeEnum.USER_NULL);
         }
         UserRespDTO result = new UserRespDTO();
         BeanUtils.copyProperties(userDO, result);
