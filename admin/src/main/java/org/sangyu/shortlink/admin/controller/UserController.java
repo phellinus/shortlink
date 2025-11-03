@@ -2,6 +2,7 @@ package org.sangyu.shortlink.admin.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.sangyu.shortlink.admin.common.convention.result.Result;
+import org.sangyu.shortlink.admin.common.enums.UserErrorCodeEnum;
 import org.sangyu.shortlink.admin.dto.resp.UserRespDTO;
 import org.sangyu.shortlink.admin.service.UserService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,7 +22,7 @@ public class UserController {
     public Result<UserRespDTO> getUserByUsername(@PathVariable("username") String username) {
         UserRespDTO result = userService.getUserByUsername(username);
         if (result == null) {
-            return new Result<UserRespDTO>().setCode("-1").setMessage("用户不存在");
+            return new Result<UserRespDTO>().setCode(UserErrorCodeEnum.USER_NULL.code()).setMessage(UserErrorCodeEnum.USER_NULL.message());
         }else{
             return new Result<UserRespDTO>().setCode("0").setData(result);
         }
