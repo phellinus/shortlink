@@ -1,14 +1,12 @@
 package org.sangyu.shortlink.admin.dto.resp;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Data;
-import org.sangyu.shortlink.admin.common.serialize.PhoneDesensitizationSerializer;
 
 /**
- * 用户返回参数响应(脱敏)
+ * 用户返回参数响应(无脱敏)
  */
 @Data
-public class UserRespDTO {
+public class UserActualRespDTO {
     /**
      * ID
      */
@@ -27,7 +25,6 @@ public class UserRespDTO {
     /**
      * 手机号
      */
-    @JsonSerialize(using = PhoneDesensitizationSerializer.class)
     private String	phone;
 
     /**
