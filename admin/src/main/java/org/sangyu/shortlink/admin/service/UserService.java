@@ -2,8 +2,10 @@ package org.sangyu.shortlink.admin.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.sangyu.shortlink.admin.dao.entity.UserDO;
+import org.sangyu.shortlink.admin.dto.req.UserLoginReqDTO;
 import org.sangyu.shortlink.admin.dto.req.UserRegisterReqDTO;
 import org.sangyu.shortlink.admin.dto.req.UserUpdateReqDTO;
+import org.sangyu.shortlink.admin.dto.resp.UserLoginRespDTO;
 import org.sangyu.shortlink.admin.dto.resp.UserRespDTO;
 
 /**
@@ -35,4 +37,19 @@ public interface UserService extends IService<UserDO> {
      * @param requestParam 用户修改信息请求参数
      */
     void update(UserUpdateReqDTO requestParam);
+
+    /**
+     * 用户登录
+     * @param requestParam 用户登录请求参数
+     * @return 用户登录响应参数 token
+     */
+    UserLoginRespDTO login(UserLoginReqDTO requestParam);
+
+    /**
+     * 检查用户是否登录
+     * @param username 用户名
+     * @param token token
+     * @return 登录返回true，未登录返回false
+     */
+    Boolean checkLogin(String username, String token);
 }

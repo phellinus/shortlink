@@ -4,9 +4,11 @@ import cn.hutool.core.bean.BeanUtil;
 import lombok.RequiredArgsConstructor;
 import org.sangyu.shortlink.admin.common.convention.result.Result;
 import org.sangyu.shortlink.admin.common.convention.result.Results;
+import org.sangyu.shortlink.admin.dto.req.UserLoginReqDTO;
 import org.sangyu.shortlink.admin.dto.req.UserRegisterReqDTO;
 import org.sangyu.shortlink.admin.dto.req.UserUpdateReqDTO;
 import org.sangyu.shortlink.admin.dto.resp.UserActualRespDTO;
+import org.sangyu.shortlink.admin.dto.resp.UserLoginRespDTO;
 import org.sangyu.shortlink.admin.dto.resp.UserRespDTO;
 import org.sangyu.shortlink.admin.service.UserService;
 import org.springframework.web.bind.annotation.*;
@@ -67,5 +69,21 @@ public class UserController {
     public Result<Void> update(@RequestBody UserUpdateReqDTO requestParam) {
         userService.update(requestParam);
         return Results.success();
+    }
+
+    /**
+     * 用户登录
+     * @param requestParam //用户登录请求参数
+     * @return result
+     */
+    @PostMapping("/api/short-link/v1/user/login")
+    public Result<UserLoginRespDTO> login(@RequestBody UserLoginReqDTO requestParam) {
+        UserLoginRespDTO result = userService.login(requestParam);
+        return Results.success(result);
+    }
+
+    @GetMapping("/api/short-link/v1/user/check-login")
+    public Result<Boolean> checkLogin(@RequestParam("username") String username,@RequestParam("token") String token) {
+        return Results.success(userService.checkLogin(username, token));
     }
 }
