@@ -44,3 +44,15 @@ INSERT INTO `t_user` (`id`, `username`, `password`, `real_name`, `phone`, `mail`
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+CREATE TABLE `t_group` (
+    `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'ID',
+    `gid` varchar(32) DEFAULT NULL COMMENT '分组标识',
+    `name` varchar(64) DEFAULT NULL COMMENT '分组名称',
+    `username` varchar(256) DEFAULT NULL COMMENT '创建分组用户',
+    `del_flag` tinyint(1) DEFAULT NULL COMMENT '删除标识0删除1保留',
+    `update_time` datetime DEFAULT NULL COMMENT '修改时间',
+    `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `idx_unique_username_gid` (`gid`,`username`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
