@@ -29,30 +29,55 @@ public class JwtUtil {
     }
 
     /**
-     * JWT过期时间（30分钟）
+     * 访问Token过期时间（30分钟）
      */
-    private static final long EXPIRATION_TIME = 30 * 60 * 1000;
+    private static final long ACCESS_TOKEN_EXPIRATION_TIME = 30 * 60 * 1000;
 
     /**
-     * 生成JWT Token
-     * @param username 用户名
-     * @return JWT Token
+     * 刷新Token过期时间（7天）
      */
-    public static String generateToken(String username) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("username", username);
-        return createToken(claims, username);
+    private static final long REFRESH_TOKEN_EXPIRATION_TIME = 7 * 24 * 60 * 60 * 1000L;
+
+    private static final String TOKEN_TYPE_CLAIM = "tokenType";
+
+    /**
+     * Token类型
+     */
+    public enum TokenType {
+        ACCESS,
+        REFRESH
+    }
+
+    /**
+     * 生成访问Token
+     * @param username 用户名
+     * @return JWT访问Token
+     */
+    public static String generateAccessToken(String username) {
+        return createToken(new HashMap<>(), username, TokenType.ACCESS, ACCESS_TOKEN_EXPIRATION_TIME);
+    }
+
+    /**
+     * 生成刷新Token
+     * @param username 用户名
+     * @return JWT刷新Token
+     */
+    public static String generateRefreshToken(String username) {
+        return createToken(new HashMap<>(), username, TokenType.REFRESH, REFRESH_TOKEN_EXPIRATION_TIME);
     }
 
     /**
      * 创建JWT Token
      * @param claims 声明
      * @param subject 主题
+     * @param tokenType token类型
+     * @param expiration 过期时间
      * @return JWT Token
      */
-    private static String createToken(Map<String, Object> claims, String subject) {
+    private static String createToken(Map<String, Object> claims, String subject, TokenType tokenType, long expiration) {
         Date now = new Date();
-        Date expirationDate = new Date(now.getTime() + EXPIRATION_TIME);
+        Date expirationDate = new Date(now.getTime() + expiration);
+        claims.put(TOKEN_TYPE_CLAIM, tokenType.name());
 
         return Jwts.builder()
                 .setClaims(claims)
@@ -89,12 +114,17 @@ public class JwtUtil {
      * 验证Token是否有效
      * @param token JWT Token
      * @param username 用户名
+     * @param expectedType 期望的token类型
      * @return 是否有效
      */
-    public static boolean validateToken(String token, String username) {
+    public static boolean validateToken(String token, String username, TokenType expectedType) {
         try {
-            String tokenUsername = getUsernameFromToken(token);
-            return tokenUsername.equals(username) && !isTokenExpired(token);
+            Claims claims = getClaimsFromToken(token);
+            String tokenUsername = claims.getSubject();
+            String tokenType = claims.get(TOKEN_TYPE_CLAIM, String.class);
+            return tokenUsername.equals(username)
+                    && expectedType.name().equals(tokenType)
+                    && !isTokenExpired(claims);
         } catch (Exception e) {
             return false;
         }
@@ -102,19 +132,27 @@ public class JwtUtil {
 
     /**
      * 检查Token是否过期
-     * @param token JWT Token
+     * @param claims JWT声明
      * @return 是否过期
      */
-    private static boolean isTokenExpired(String token) {
-        Date expiration = getClaimsFromToken(token).getExpiration();
+    private static boolean isTokenExpired(Claims claims) {
+        Date expiration = claims.getExpiration();
         return expiration.before(new Date());
     }
 
     /**
-     * 获取Token过期时间（毫秒）
+     * 获取访问Token过期时间（毫秒）
      * @return 过期时间
      */
-    public static long getExpirationTime() {
-        return EXPIRATION_TIME;
+    public static long getAccessExpirationTime() {
+        return ACCESS_TOKEN_EXPIRATION_TIME;
+    }
+
+    /**
+     * 获取刷新Token过期时间（毫秒）
+     * @return 过期时间
+     */
+    public static long getRefreshExpirationTime() {
+        return REFRESH_TOKEN_EXPIRATION_TIME;
     }
 }

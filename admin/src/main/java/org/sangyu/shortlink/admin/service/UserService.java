@@ -3,6 +3,7 @@ package org.sangyu.shortlink.admin.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.sangyu.shortlink.admin.dao.entity.UserDO;
 import org.sangyu.shortlink.admin.dto.req.UserLoginReqDTO;
+import org.sangyu.shortlink.admin.dto.req.UserRefreshTokenReqDTO;
 import org.sangyu.shortlink.admin.dto.req.UserRegisterReqDTO;
 import org.sangyu.shortlink.admin.dto.req.UserUpdateReqDTO;
 import org.sangyu.shortlink.admin.dto.resp.UserLoginRespDTO;
@@ -59,4 +60,11 @@ public interface UserService extends IService<UserDO> {
      * @param token token
      */
     void logout(String username, String token);
+
+    /**
+     * 刷新token
+     * @param requestParam 刷新token请求参数
+     * @return 新的token信息
+     */
+    UserLoginRespDTO refreshToken(UserRefreshTokenReqDTO requestParam);
 }

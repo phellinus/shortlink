@@ -15,6 +15,7 @@ import org.sangyu.shortlink.admin.common.enums.UserErrorCodeEnum;
 import org.sangyu.shortlink.admin.dao.entity.UserDO;
 import org.sangyu.shortlink.admin.dao.mapper.UserMapper;
 import org.sangyu.shortlink.admin.dto.req.UserLoginReqDTO;
+import org.sangyu.shortlink.admin.dto.req.UserRefreshTokenReqDTO;
 import org.sangyu.shortlink.admin.dto.req.UserRegisterReqDTO;
 import org.sangyu.shortlink.admin.dto.req.UserUpdateReqDTO;
 import org.sangyu.shortlink.admin.dto.resp.UserLoginRespDTO;
@@ -25,10 +26,12 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import static org.sangyu.shortlink.admin.common.constant.RedisCacheConstant.LOCK_USER_REGISTER_KEY;
 import static org.sangyu.shortlink.admin.common.constant.RedisCacheConstant.USER_LOGIN_KEY;
+import static org.sangyu.shortlink.admin.common.constant.RedisCacheConstant.USER_REFRESH_TOKEN_KEY;
 
 /**
  * 用户接口实现层
@@ -104,16 +107,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
             throw new ClientException("用户已登录");
         }
         // 生成JWT Token
-        String token = JwtUtil.generateToken(requestParam.getUsername());
+        String accessToken = JwtUtil.generateAccessToken(requestParam.getUsername());
+        String refreshToken = JwtUtil.generateRefreshToken(requestParam.getUsername());
         // 将用户信息存储到Redis，Key为用户名，Value为JSON字符串
         stringRedisTemplate.opsForValue().set(
                 USER_LOGIN_KEY + requestParam.getUsername(),
                 JSON.toJSONString(result),
-                JwtUtil.getExpirationTime(),
+                JwtUtil.getRefreshExpirationTime(),
+                TimeUnit.MILLISECONDS
+        );
+        stringRedisTemplate.opsForValue().set(
+                USER_REFRESH_TOKEN_KEY + requestParam.getUsername(),
+                refreshToken,
+                JwtUtil.getRefreshExpirationTime(),
                 TimeUnit.MILLISECONDS
         );
 
-        return new UserLoginRespDTO(token);
+        return new UserLoginRespDTO(accessToken, refreshToken, JwtUtil.getAccessExpirationTime());
     }
 
     /**
@@ -124,8 +134,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
      */
     @Override
     public Boolean checkLogin(String username, String token) {
-        // 验证JWT Token是否有效
-        if (!JwtUtil.validateToken(token, username)) {
+        // 验证JWT访问Token是否有效
+        if (!JwtUtil.validateToken(token, username, JwtUtil.TokenType.ACCESS)) {
             return false;
         }
         // 检查Redis中是否存在用户登录信息
@@ -140,9 +150,56 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
     @Override
     public void logout(String username, String token) {
         if (checkLogin(username, token)) {
-            stringRedisTemplate.delete(USER_LOGIN_KEY + username);
+            stringRedisTemplate.delete(Arrays.asList(
+                    USER_LOGIN_KEY + username,
+                    USER_REFRESH_TOKEN_KEY + username
+            ));
             return;
         }
         throw new ClientException("用户token不存在或者用户未登录");
+    }
+
+    /**
+     * 刷新token
+     * @param requestParam 刷新请求
+     * @return 新的token
+     */
+    @Override
+    public UserLoginRespDTO refreshToken(UserRefreshTokenReqDTO requestParam) {
+        String refreshToken = requestParam.getRefreshToken();
+        if (refreshToken == null) {
+            throw new ClientException("刷新token不能为空");
+        }
+        String username;
+        try {
+            username = JwtUtil.getUsernameFromToken(refreshToken);
+        } catch (Exception e) {
+            throw new ClientException("刷新token解析失败");
+        }
+        Boolean hasLogin = stringRedisTemplate.hasKey(USER_LOGIN_KEY + username);
+        if (!Boolean.TRUE.equals(hasLogin)) {
+            throw new ClientException("用户未登录或会话已失效");
+        }
+        if (!JwtUtil.validateToken(refreshToken, username, JwtUtil.TokenType.REFRESH)) {
+            throw new ClientException("刷新token无效");
+        }
+        String cachedRefreshToken = stringRedisTemplate.opsForValue().get(USER_REFRESH_TOKEN_KEY + username);
+        if (cachedRefreshToken == null || !cachedRefreshToken.equals(refreshToken)) {
+            throw new ClientException("刷新token已失效");
+        }
+        String newAccessToken = JwtUtil.generateAccessToken(username);
+        String newRefreshToken = JwtUtil.generateRefreshToken(username);
+        stringRedisTemplate.opsForValue().set(
+                USER_REFRESH_TOKEN_KEY + username,
+                newRefreshToken,
+                JwtUtil.getRefreshExpirationTime(),
+                TimeUnit.MILLISECONDS
+        );
+        stringRedisTemplate.expire(
+                USER_LOGIN_KEY + username,
+                JwtUtil.getRefreshExpirationTime(),
+                TimeUnit.MILLISECONDS
+        );
+        return new UserLoginRespDTO(newAccessToken, newRefreshToken, JwtUtil.getAccessExpirationTime());
     }
 }

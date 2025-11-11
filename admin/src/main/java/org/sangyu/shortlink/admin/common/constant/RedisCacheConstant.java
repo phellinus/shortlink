@@ -10,4 +10,9 @@ public class RedisCacheConstant {
      * 用户登录缓存Key前缀
      */
     public static final String USER_LOGIN_KEY = "short-link:user:login:";
+
+    /**
+     * 用户刷新token缓存Key前缀
+     */
+    public static final String USER_REFRESH_TOKEN_KEY = "short-link:user:refresh-token:";
 }

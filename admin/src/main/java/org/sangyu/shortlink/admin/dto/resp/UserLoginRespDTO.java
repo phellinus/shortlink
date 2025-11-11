@@ -13,7 +13,17 @@ import lombok.NoArgsConstructor;
 public class UserLoginRespDTO {
 
     /**
-     * 返回的token
+     * 访问token
      */
-    private String token;
+    private String accessToken;
+
+    /**
+     * 刷新token
+     */
+    private String refreshToken;
+
+    /**
+     * 访问token过期时间（毫秒）
+     */
+    private long expiresIn;
 }

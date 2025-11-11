@@ -2,9 +2,11 @@ package org.sangyu.shortlink.admin.controller;
 
 import cn.hutool.core.bean.BeanUtil;
 import lombok.RequiredArgsConstructor;
+import org.sangyu.shortlink.admin.common.convention.exception.ClientException;
 import org.sangyu.shortlink.admin.common.convention.result.Result;
 import org.sangyu.shortlink.admin.common.convention.result.Results;
 import org.sangyu.shortlink.admin.dto.req.UserLoginReqDTO;
+import org.sangyu.shortlink.admin.dto.req.UserRefreshTokenReqDTO;
 import org.sangyu.shortlink.admin.dto.req.UserRegisterReqDTO;
 import org.sangyu.shortlink.admin.dto.req.UserUpdateReqDTO;
 import org.sangyu.shortlink.admin.dto.resp.UserActualRespDTO;
@@ -82,14 +84,33 @@ public class UserController {
         return Results.success(result);
     }
 
+    /**
+     * 刷新token
+     * @param requestParam 刷新请求参数
+     * @return result
+     */
+    @PostMapping("/api/short-link/v1/user/refresh-token")
+    public Result<UserLoginRespDTO> refreshToken(@RequestBody UserRefreshTokenReqDTO requestParam) {
+        return Results.success(userService.refreshToken(requestParam));
+    }
+
     @GetMapping("/api/short-link/v1/user/check-login")
-    public Result<Boolean> checkLogin(@RequestParam("username") String username,@RequestParam("token") String token) {
-        return Results.success(userService.checkLogin(username, token));
+    public Result<Boolean> checkLogin(@RequestParam("username") String username,
+                                      @RequestHeader(value = "Authorization", required = false) String authorization) {
+        return Results.success(userService.checkLogin(username, resolveToken(authorization)));
     }
 
     @DeleteMapping("/api/short-link/v1/user/logout")
-    public Result<Void> logout(@RequestParam("username") String username,@RequestParam("token") String token) {
-        userService.logout(username, token);
+    public Result<Void> logout(@RequestParam("username") String username,
+                               @RequestHeader(value = "Authorization", required = false) String authorization) {
+        userService.logout(username, resolveToken(authorization));
         return Results.success();
+    }
+
+    private String resolveToken(String authorization) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            throw new ClientException("请求头中缺少或未按Bearer格式提供token");
+        }
+        return authorization.substring("Bearer ".length());
     }
 }
