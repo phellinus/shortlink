@@ -19,15 +19,16 @@ import org.sangyu.shortlink.admin.dto.req.UserRegisterReqDTO;
 import org.sangyu.shortlink.admin.dto.req.UserUpdateReqDTO;
 import org.sangyu.shortlink.admin.dto.resp.UserLoginRespDTO;
 import org.sangyu.shortlink.admin.dto.resp.UserRespDTO;
+import org.sangyu.shortlink.admin.common.utils.JwtUtil;
 import org.sangyu.shortlink.admin.service.UserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.sangyu.shortlink.admin.common.constant.RedisCacheConstant.LOCK_USER_REGISTER_KEY;
+import static org.sangyu.shortlink.admin.common.constant.RedisCacheConstant.USER_LOGIN_KEY;
 
 /**
  * 用户接口实现层
@@ -98,22 +99,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         if(result == null) {
             throw new ClientException("用户不存在");
         }
-        Boolean hasLogin = stringRedisTemplate.hasKey("login_" + requestParam.getUsername());
+        Boolean hasLogin = stringRedisTemplate.hasKey(USER_LOGIN_KEY + requestParam.getUsername());
         if (hasLogin) {
             throw new ClientException("用户已登录");
         }
-        /*
-          Hash
-          Key: login_用户名
-          Value:
-           Key: token标识
-           Val: JSON 字符串（用户信息）
-         */
-        String uuid = UUID.randomUUID().toString();
-        stringRedisTemplate.opsForHash().put("login_"+requestParam.getUsername(),uuid, JSON.toJSONString(result));
-        stringRedisTemplate.expire("login_" + requestParam.getUsername(), 30L, TimeUnit.MINUTES);
+        // 生成JWT Token
+        String token = JwtUtil.generateToken(requestParam.getUsername());
+        // 将用户信息存储到Redis，Key为用户名，Value为JSON字符串
+        stringRedisTemplate.opsForValue().set(
+                USER_LOGIN_KEY + requestParam.getUsername(),
+                JSON.toJSONString(result),
+                JwtUtil.getExpirationTime(),
+                TimeUnit.MILLISECONDS
+        );
 
-        return new UserLoginRespDTO(uuid);
+        return new UserLoginRespDTO(token);
     }
 
     /**
@@ -124,7 +124,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
      */
     @Override
     public Boolean checkLogin(String username, String token) {
-        return stringRedisTemplate.opsForHash().get("login_"+username,token) != null;
+        // 验证JWT Token是否有效
+        if (!JwtUtil.validateToken(token, username)) {
+            return false;
+        }
+        // 检查Redis中是否存在用户登录信息
+        return Boolean.TRUE.equals(stringRedisTemplate.hasKey(USER_LOGIN_KEY + username));
     }
 
     /**
@@ -135,7 +140,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
     @Override
     public void logout(String username, String token) {
         if (checkLogin(username, token)) {
-            stringRedisTemplate.opsForHash().delete("login_"+username,token);
+            stringRedisTemplate.delete(USER_LOGIN_KEY + username);
             return;
         }
         throw new ClientException("用户token不存在或者用户未登录");
