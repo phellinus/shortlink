@@ -1,16 +1,21 @@
 package org.sangyu.shortlink.admin.dao.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-
-import java.util.Date;
+import lombok.NoArgsConstructor;
+import org.sangyu.shortlink.admin.common.database.BaseDto;
 
 /**
  * 短链接分组实体
  */
 @Data
 @TableName("t_group")
-public class GroupDO {
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class GroupDO extends BaseDto {
     /**
      * ID
      */
@@ -30,19 +35,4 @@ public class GroupDO {
      * 创建分组用户
      */
     private String username;
-
-    /**
-     * 删除标识0删除1保留
-     */
-    private Integer delFlag;
-
-    /**
-     * 修改时间
-     */
-    private Date updateTime;
-
-    /**
-     * 创建时间
-     */
-    private Date createTime;
 }
