@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.sangyu.shortlink.admin.common.convention.result.Result;
 import org.sangyu.shortlink.admin.common.convention.result.Results;
 import org.sangyu.shortlink.admin.dto.req.ShortLinkGroupSaveReqDTO;
+import org.sangyu.shortlink.admin.dto.req.ShortLinkGroupSortReqDTO;
 import org.sangyu.shortlink.admin.dto.req.ShortLinkGroupUpdateReqDTO;
 import org.sangyu.shortlink.admin.dto.resp.ShortLinkGroupRespDTO;
 import org.sangyu.shortlink.admin.service.GroupService;
@@ -63,6 +64,12 @@ public class GroupController {
     @DeleteMapping("/api/short-link/v1/group")
     public Result<Void> deleteGroup(@RequestParam String gid) {
         groupService.deleteGroup(gid);
+        return Results.success();
+    }
+
+    @PostMapping("/api/short-link/v1/group/sort")
+    public Result<Void> sortGroup(@RequestBody List<ShortLinkGroupSortReqDTO> requestParam){
+        groupService.sortGroup(requestParam);
         return Results.success();
     }
 }
