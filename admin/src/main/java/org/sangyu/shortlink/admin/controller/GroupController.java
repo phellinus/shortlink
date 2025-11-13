@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.sangyu.shortlink.admin.common.convention.result.Result;
 import org.sangyu.shortlink.admin.common.convention.result.Results;
 import org.sangyu.shortlink.admin.dto.req.ShortLinkGroupSaveReqDTO;
+import org.sangyu.shortlink.admin.dto.req.ShortLinkGroupUpdateReqDTO;
 import org.sangyu.shortlink.admin.dto.resp.ShortLinkGroupRespDTO;
 import org.sangyu.shortlink.admin.service.GroupService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,5 +40,16 @@ public class GroupController {
     @GetMapping("/api/short-link/v1/group")
     public Result<List<ShortLinkGroupRespDTO>> listGroup(){
         return Results.success(groupService.listGroup());
+    }
+
+    /**
+     * 更新短链接分组名称
+     * @param requestParam 请求参数
+     * @return result
+     */
+    @PostMapping("/api/short-link/v1/group/update")
+    public Result<Void> updateGroup(@RequestBody ShortLinkGroupUpdateReqDTO requestParam){
+        groupService.updateGroup(requestParam);
+        return Results.success();
     }
 }

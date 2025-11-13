@@ -1,13 +1,10 @@
 package org.sangyu.shortlink.admin.common.biz.user;
 
 import com.alibaba.fastjson2.JSON;
-import jakarta.servlet.Filter;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
+import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.sangyu.shortlink.admin.common.convention.exception.ClientException;
 import org.sangyu.shortlink.admin.common.utils.JwtUtil;
 import org.sangyu.shortlink.admin.dao.entity.UserDO;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -59,7 +56,7 @@ public class UserTransmitFilter implements Filter {
             }
             if (!JwtUtil.validateToken(token, username, JwtUtil.TokenType.ACCESS)) {
                 log.debug("Invalid JWT token detected, skip user context population for URI {}", request.getRequestURI());
-                return;
+                throw new ClientException("登录已失效，请重新登录");
             }
             UserInfoDTO userInfoDTO = buildUserInfo(username, token);
             UserContext.setUser(userInfoDTO);
